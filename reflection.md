@@ -4,8 +4,44 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+**Three core user actions:**
+
+1. **Enter owner and pet info** — The user can provide basic details about themselves and their pet (like owner name, pet name and species, and total time available for care each day).
+
+2. **Add and manage care tasks** — The user creates individual care tasks (walks, feeding, medication, grooming, enrichment, etc.), each with at minimum a name, estimated duration, and priority level. The user should also be able to edit or remove tasks so the list stays accurate over time.
+
+3. **Generate and view the daily plan** — The user triggers the scheduler, which takes the task list and owner constraints, selects and orders tasks that fit within the available time window, and displays the resulting daily schedule. Ideally the app also explains why certain tasks were included or excluded (e.g., "Medication was scheduled first because it is high priority; enrichment walk was skipped because no time remained").
+
+**Classes, attributes, and methods:**
+
+**`Owner`**
+- Attributes: `name` (str), `available_minutes` (int — total care time per day)
+- Methods:
+  - `has_time_for(task)` → bool — checks whether a task fits within remaining availability
+  - `__repr__` — human-readable summary for display
+
+**`Pet`**
+- Attributes: `name` (str), `species` (str), `age` (int/float), `notes` (str — any special needs or preferences)
+- Methods:
+  - `__repr__` — human-readable summary for display
+
+**`Task`**
+- Attributes: `name` (str), `category` (str — e.g. walk, feeding, medication, grooming), `duration_minutes` (int), `priority` (int or enum — e.g. 1=high, 2=medium, 3=low), `is_required` (bool — e.g. medication is non-negotiable)
+- Methods:
+  - `is_higher_priority_than(other)` → bool — comparison helper for sorting
+  - `__repr__` — human-readable summary for display
+
+**`Scheduler`**
+- Attributes: `owner` (Owner), `pet` (Pet), `tasks` (list[Task])
+- Methods:
+  - `add_task(task)` — adds a task to the list
+  - `remove_task(name)` — removes a task by name
+  - `generate_plan()` → DailyPlan — sorts tasks by priority, fits them within available time, returns a plan with reasoning
+
+**`DailyPlan`**
+- Attributes: `scheduled_tasks` (list[Task] — tasks that made the cut), `skipped_tasks` (list[Task] — tasks that were dropped and why), `reasoning` (list[str] — one explanation per scheduling decision)
+- Methods:
+  - `summary()` → str — formats the full plan as a readable string for display in the UI
 
 **b. Design changes**
 

@@ -1,0 +1,47 @@
+classDiagram
+    class Owner {
+        +str name
+        +int available_minutes
+        +has_time_for(task) bool
+        +__repr__() str
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +float age
+        +str notes
+        +__repr__() str
+    }
+
+    class Task {
+        +str name
+        +str category
+        +int duration_minutes
+        +int priority
+        +bool is_required
+        +is_higher_priority_than(other) bool
+        +__repr__() str
+    }
+
+    class Scheduler {
+        +Owner owner
+        +Pet pet
+        +list~Task~ tasks
+        +add_task(task)
+        +remove_task(name)
+        +generate_plan() DailyPlan
+    }
+
+    class DailyPlan {
+        +list~Task~ scheduled_tasks
+        +list~Task~ skipped_tasks
+        +list~str~ reasoning
+        +summary() str
+    }
+
+    Scheduler --> Owner : uses
+    Scheduler --> Pet : uses
+    Scheduler --> Task : manages
+    Scheduler ..> DailyPlan : creates
+    DailyPlan --> Task : references
