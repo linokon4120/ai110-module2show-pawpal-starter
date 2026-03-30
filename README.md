@@ -22,6 +22,21 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Features
+
+- **Owner & multi-pet profile** — Set your name, daily care budget (minutes), and register any number of pets with species, age, and notes.
+- **Task management** — Add tasks per pet with name, category, duration, priority, start time, and recurrence frequency.
+- **Priority scheduling** — Required tasks are always scheduled first; optional tasks are sorted by priority level, then duration to maximise what fits within the daily budget.
+- **Sorting by time** — All tasks across all pets are displayed in a single chronological table sorted by `HH:MM` start time; unscheduled tasks appear at the bottom.
+- **Conflict warnings** — The scheduler checks each pet's scheduled tasks for overlapping time windows and surfaces a plain-English `⚠` warning before generating the plan.
+- **Recurring tasks** — Mark a daily or weekly task complete and a new instance is automatically created with the due date shifted by one day or seven days respectively.
+- **Filtering** — Query tasks by pet name, completion status, or both using `Scheduler.filter_tasks()`.
+- **Reasoning log** — Every scheduling decision (why a task was included or skipped) is recorded and available via an expandable panel in the UI.
+
+## 📸 Demo
+
+<a href="/course_images/ai110/pawpal_screenshot.png" target="_blank"><img src='/course_images/ai110/pawpal_screenshot.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>
+
 ## Testing PawPal+
 
 Run the full test suite with:

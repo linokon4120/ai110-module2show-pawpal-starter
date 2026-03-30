@@ -40,8 +40,13 @@ After reviewing the initial skeleton, three changes were made based on AI feedba
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers three constraints:
+
+1. **Required flag** — tasks marked `is_required=True` are always scheduled regardless of the time budget. This was treated as the hardest constraint because dropping a medication or feeding task would have real consequences for the pet.
+2. **Daily time budget** — the owner's `available_minutes` sets a hard upper limit on total scheduled time. Once the budget is exhausted, optional tasks are skipped.
+3. **Priority level** — among optional tasks, those with priority 1 (high) are scheduled before priority 2 (medium) before priority 3 (low). Duration is used as a tiebreaker — shorter tasks of equal priority are scheduled first to fit more tasks in.
+
+The required-first rule was decided first because it reflects real-world necessity. Time budget was second because it is the primary user-provided constraint. Priority ordering was third because it is a preference, not a hard rule — a low-priority task can still run if time allows.
 
 **b. Tradeoffs**
 
@@ -55,13 +60,16 @@ This tradeoff is reasonable for a first version because: (1) the exact overlap c
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+AI was used at every stage of the project, but in different modes:
+
+- **Design brainstorming (Phase 1)** — Used AI to generate a list of classes and identify missing relationships (e.g., that `has_time_for` belonged on `Scheduler`, not `Owner`). Asking "what relationships or logic bottlenecks do you see?" was more useful than asking "what should I build?" because it forced the AI to reason about the design rather than invent requirements.
+- **Skeleton generation (Phase 2)** — Used AI to produce class stubs from the UML description. The most effective prompt style was giving the class diagram as context and asking for Python that matched it exactly, rather than a free-form "write me a scheduler."
+- **Algorithm brainstorming (Phase 3)** — Used AI to suggest sorting, filtering, recurrence, and conflict detection strategies. Asking "give me a lightweight strategy that returns a warning string rather than raising an exception" steered it toward operationally appropriate solutions.
+- **Test planning** — Used AI to enumerate edge cases ("what would break this sorting function?"). This was the highest-value use: AI is good at exhaustively listing boundary conditions, which is tedious to do manually.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+The initial AI suggestion for `has_time_for` placed it as a method on `Owner`, checking whether a task fit within `owner.available_minutes`. This looked reasonable in isolation. The suggestion was rejected because `Owner.available_minutes` is a fixed total — it does not decrease as tasks are added. The running tally of remaining time only exists as a local variable inside `generate_plan()`, so putting the check on `Owner` would require either passing the tally as an argument (which defeats the encapsulation) or storing it as mutable state on `Owner` (which gives `Owner` scheduler responsibilities it shouldn't have). The fix was to move the check into `Scheduler` as the private method `_has_time_for(task, remaining_minutes)`, where the remaining budget is always in scope. This was verified by tracing through the generate_plan loop manually and confirming that `remaining` was correctly decremented after each scheduled task.
 
 ---
 
@@ -93,12 +101,12 @@ This tradeoff is reasonable for a first version because: (1) the exact overlap c
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+The separation between the logic layer (`pawpal_system.py`) and the UI layer (`app.py`) worked cleanly. Because all scheduling logic lived in Python classes with no Streamlit dependencies, it was straightforward to test the scheduler in isolation using pytest without spinning up a browser. When Phase 3 features (sorting, conflict detection, recurrence) were added to the scheduler, they could be verified with tests before ever touching the UI. This separation also made the Streamlit code easier to read — `app.py` is mostly forms and display calls, not business logic.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+The `task_id` field is currently a caller-constructed string (e.g. `"biscuit-morning-walk-0"`), which makes uniqueness dependent on naming discipline. In a second iteration, `task_id` would be auto-generated using `uuid.uuid4()` on construction so callers never have to think about it. I would also add a time-format validator to `Task` so that a malformed `start_time` like `"8:00"` fails loudly at creation time rather than crashing silently inside `_time_to_minutes` during sorting or conflict detection.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The most important thing learned was that AI is most useful as a **critic and enumerator**, not an author. When asked "write me a scheduler," the AI produces plausible-looking code that may have subtle design flaws. When asked "what relationships or responsibilities are wrong in this design?" or "what edge cases would break this function?", the AI surfaces problems that are easy to miss when you're close to the code. The human's job is not to accept or reject whole suggestions, but to understand each piece well enough to evaluate it — and then integrate only the parts that fit the actual design. Being the "lead architect" means owning every decision even when the AI wrote the first draft.
