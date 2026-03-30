@@ -45,8 +45,9 @@ After reviewing the initial skeleton, three changes were made based on AI feedba
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The conflict detector checks for **exact time-window overlaps** (task A starts before task B ends, and task B starts before task A ends) but does not account for travel time, setup time, or owner fatigue between tasks. Two tasks scheduled back-to-back — one ending at 08:30 and the next starting at 08:30 — are considered non-conflicting even if the owner realistically needs a few minutes between them.
+
+This tradeoff is reasonable for a first version because: (1) the exact overlap check covers the most obvious scheduling mistakes without requiring extra configuration; (2) adding buffer time would require the owner to specify it per task or globally, which adds friction for a daily-use tool; and (3) the scheduler's purpose is to help, not to perfectly simulate reality — a warning about an actual overlap is more useful than false positives from a buffer that may not apply to every task pair.
 
 ---
 
