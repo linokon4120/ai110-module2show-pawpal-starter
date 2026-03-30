@@ -22,6 +22,29 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Testing PawPal+
+
+Run the full test suite with:
+
+```bash
+python -m pytest
+```
+
+> On macOS without a virtual environment, use `python3 -m pytest` instead.
+
+**19 tests** across 6 areas:
+
+| Area | What is verified |
+|---|---|
+| Task completion | `mark_complete()` flips `completed` to `True` |
+| Pet task count | `add_task()` increases the pet's task list by one |
+| Sorting | Tasks come back in chronological `HH:MM` order; unscheduled tasks go last |
+| Recurring tasks | Daily → next due +1 day; weekly → +7 days; non-recurring → `None` returned; original marked done |
+| Conflict detection | Overlapping windows flagged; adjacent tasks and cross-pet overlaps are not |
+| Filtering & edge cases | `filter_tasks` by pet/status; empty-task owners don't crash; required tasks scheduled even over budget |
+
+**Confidence: 4/5 stars ** — core scheduling logic, sorting, filtering, recurrence, and conflict detection are all covered. Edge cases not yet tested: tasks with missing/malformed `start_time` values, an owner with zero pets, and filtering with both `pet_name` and `completed` combined.
+
 ## Getting started
 
 ### Setup

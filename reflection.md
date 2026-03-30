@@ -69,13 +69,23 @@ This tradeoff is reasonable for a first version because: (1) the exact overlap c
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+19 automated tests across six areas:
+
+1. **Task completion** — `mark_complete()` flips `completed` to `True`. Important because recurring task logic depends on this flag being accurate.
+2. **Sorting correctness** — tasks come back in chronological `HH:MM` order; unscheduled tasks go last; an empty pet returns an empty list. Important because the UI displays tasks in sorted order.
+3. **Recurrence logic** — daily tasks produce a next occurrence with `due_date + 1 day`; weekly tasks use `+7 days`; non-recurring tasks return `None` and add nothing; the original task is marked done. Important because silent failures here would cause tasks to disappear or duplicate incorrectly.
+4. **Conflict detection** — overlapping windows are flagged; adjacent tasks (one ends exactly when the next begins) are *not* flagged; tasks on different pets are *not* flagged; unscheduled tasks are never flagged. Important for verifying the boundary conditions of the overlap check.
+5. **Filtering** — `filter_tasks(pet_name=...)` returns only that pet's tasks; `filter_tasks(completed=False)` excludes done tasks. Important because the UI uses filtering to display relevant subsets.
+6. **`generate_plan` edge cases** — an owner with no tasks returns an empty plan without crashing; a required task is always scheduled even when it alone exceeds the time budget. Important because these are failure modes a real user would hit immediately.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+**★★★★☆** — The core behaviors (scheduling, sorting, filtering, recurrence, conflict detection) are all verified with both happy-path and edge-case tests. Confidence is not five stars because the following edge cases remain untested:
+
+- A `start_time` string in an invalid format (e.g. `"8:00"` or `"25:99"`) would cause `_time_to_minutes` to raise an unhandled error.
+- Filtering with both `pet_name` and `completed` combined has not been tested.
+- An owner with zero pets (no `add_pet` calls) has not been tested through `generate_plan`.
+- Behavior when two tasks share the same `task_id` is undefined and untested.
 
 ---
 
