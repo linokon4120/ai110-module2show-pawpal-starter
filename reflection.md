@@ -12,41 +12,27 @@
 
 3. **Generate and view the daily plan** — The user triggers the scheduler, which takes the task list and owner constraints, selects and orders tasks that fit within the available time window, and displays the resulting daily schedule. Ideally the app also explains why certain tasks were included or excluded (e.g., "Medication was scheduled first because it is high priority; enrichment walk was skipped because no time remained").
 
-**Classes, attributes, and methods:**
+**Classes, attributes, and responsibilities:**
 
-**`Owner`**
-- Attributes: `name` (str), `available_minutes` (int — total care time per day)
-- Methods:
-  - `has_time_for(task)` → bool — checks whether a task fits within remaining availability
-  - `__repr__` — human-readable summary for display
+- **`Pet`** (dataclass) — pure data container for the animal being cared for. Holds `name`, `species`, `age`, and `notes` (special needs). No behavior; exists so other classes have a typed object to reference instead of loose strings.
 
-**`Pet`**
-- Attributes: `name` (str), `species` (str), `age` (int/float), `notes` (str — any special needs or preferences)
-- Methods:
-  - `__repr__` — human-readable summary for display
+- **`Task`** (dataclass) — the atomic unit of the system. Holds everything needed to evaluate and schedule one care activity: `name`, `category`, `duration_minutes`, `priority` (1=high, 2=medium, 3=low), `is_required` (non-negotiable tasks like medication), and `task_id` (unique key for safe removal). Has one comparison method: `is_higher_priority_than(other)`.
 
-**`Task`**
-- Attributes: `name` (str), `category` (str — e.g. walk, feeding, medication, grooming), `duration_minutes` (int), `priority` (int or enum — e.g. 1=high, 2=medium, 3=low), `is_required` (bool — e.g. medication is non-negotiable)
-- Methods:
-  - `is_higher_priority_than(other)` → bool — comparison helper for sorting
-  - `__repr__` — human-readable summary for display
+- **`Owner`** — holds the scheduling constraint: `name` and `available_minutes` (total daily care budget). Intentionally kept simple; time-tracking logic lives in `Scheduler`, not here.
 
-**`Scheduler`**
-- Attributes: `owner` (Owner), `pet` (Pet), `tasks` (list[Task])
-- Methods:
-  - `add_task(task)` — adds a task to the list
-  - `remove_task(name)` — removes a task by name
-  - `generate_plan()` → DailyPlan — sorts tasks by priority, fits them within available time, returns a plan with reasoning
+- **`Scheduler`** — the core logic class. Owns the task list and references to `Owner` and `Pet`. Responsible for `add_task`, `remove_task` (by `task_id`), and `generate_plan`. Also has a private helper `_has_time_for(task, remaining_minutes)` that checks fit against the running time budget during plan generation.
 
-**`DailyPlan`**
-- Attributes: `scheduled_tasks` (list[Task] — tasks that made the cut), `skipped_tasks` (list[Task] — tasks that were dropped and why), `reasoning` (list[str] — one explanation per scheduling decision)
-- Methods:
-  - `summary()` → str — formats the full plan as a readable string for display in the UI
+- **`DailyPlan`** — the output object produced by `Scheduler.generate_plan()`. Holds `scheduled_tasks`, `skipped_tasks`, `reasoning` (one string per scheduling decision), and references to `owner` and `pet` so `summary()` can produce a named, context-aware output.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+After reviewing the initial skeleton, three changes were made based on AI feedback:
+
+1. **Moved time-availability check from `Owner` to `Scheduler`** — The original design put `has_time_for(task)` on `Owner`, but `Owner` only knows the total budget, not how much has already been used. The running tally of remaining minutes only exists during `generate_plan()`, so the check was moved there as a private method `_has_time_for(task, remaining_minutes)`. This keeps `Owner` as a simple data holder and avoids giving it responsibilities that require `Scheduler`'s state.
+
+2. **Added `task_id` to `Task` and changed `remove_task` to use it** — The original `remove_task(name)` was ambiguous if two tasks shared the same name (e.g., two "Walk" entries). Adding a `task_id` field makes removal unambiguous and mirrors how most real systems handle item identity.
+
+3. **Added `owner` and `pet` references to `DailyPlan`** — Without these, `DailyPlan.summary()` could not produce a pet-specific or owner-specific message. Passing them in at construction time gives `summary()` the context it needs without requiring the UI layer to inject it separately.
 
 ---
 
